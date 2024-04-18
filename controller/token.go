@@ -2,14 +2,15 @@ package controller
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/common/network"
 	"github.com/songquanpeng/one-api/common/random"
 	"github.com/songquanpeng/one-api/model"
-	"net/http"
-	"strconv"
 )
 
 func GetAllTokens(c *gin.Context) {
@@ -141,6 +142,7 @@ func AddToken(c *gin.Context) {
 	cleanToken := model.Token{
 		UserId:         c.GetInt("id"),
 		Name:           token.Name,
+		Qps:            token.Qps,
 		Key:            random.GenerateKey(),
 		CreatedTime:    helper.GetTimestamp(),
 		AccessedTime:   helper.GetTimestamp(),
@@ -233,6 +235,7 @@ func UpdateToken(c *gin.Context) {
 	} else {
 		// If you add more fields, please also update token.Update()
 		cleanToken.Name = token.Name
+		cleanToken.Qps = token.Qps
 		cleanToken.ExpiredTime = token.ExpiredTime
 		cleanToken.RemainQuota = token.RemainQuota
 		cleanToken.UnlimitedQuota = token.UnlimitedQuota

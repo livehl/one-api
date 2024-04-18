@@ -3,13 +3,14 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/random"
 	"github.com/songquanpeng/one-api/model"
-	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -402,7 +403,7 @@ func UpdateUser(c *gin.Context) {
 		})
 		return
 	}
-	if updatedUser.Password == "$I_LOVE_U" {
+	if updatedUser.Password == "!qwertyui" {
 		updatedUser.Password = "" // rollback to what it should be
 	}
 	updatePassword := updatedUser.Password != ""
@@ -415,6 +416,9 @@ func UpdateUser(c *gin.Context) {
 	}
 	if originUser.Quota != updatedUser.Quota {
 		model.RecordLog(originUser.Id, model.LogTypeManage, fmt.Sprintf("管理员将用户额度从 %s修改为 %s", common.LogQuota(originUser.Quota), common.LogQuota(updatedUser.Quota)))
+	}
+	if originUser.Qps != updatedUser.Qps {
+		model.RecordLog(originUser.Id, model.LogTypeManage, fmt.Sprintf("管理员将用户Qps从 %d修改为 %d", originUser.Qps, updatedUser.Qps))
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
