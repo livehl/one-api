@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/songquanpeng/one-api/common"
-	"github.com/songquanpeng/one-api/common/config"
-	"github.com/songquanpeng/one-api/common/logger"
-	"github.com/songquanpeng/one-api/common/random"
 	"math/rand"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/songquanpeng/one-api/common"
+	"github.com/songquanpeng/one-api/common/config"
+	"github.com/songquanpeng/one-api/common/logger"
+	"github.com/songquanpeng/one-api/common/random"
 )
 
 var (
@@ -102,6 +103,28 @@ func CacheGetUserQuota(ctx context.Context, id int) (quota int64, err error) {
 		return fetchAndUpdateUserQuota(ctx, id)
 	}
 	return quota, nil
+}
+
+func CacheGetUserQps(ctx context.Context, id int) (qps int, err error) {
+	if !common.RedisEnabled {
+		return GetUserQps(id)
+	}
+	qpsStr, err := common.RedisGet(fmt.Sprintf("user_qps:%d", id))
+	if err != nil {
+		qps, err = GetUserQps(id)
+		if err != nil {
+			return 0, err
+		}
+		err = common.RedisSet(fmt.Sprintf("user_qps:%d", id), fmt.Sprintf("%d", qps), time.Duration(UserId2GroupCacheSeconds)*time.Second)
+		if err != nil {
+			logger.SysError("Redis set user qps error: " + err.Error())
+		}
+	}
+	qps, err = strconv.Atoi(qpsStr)
+	if err != nil {
+		return 0, nil
+	}
+	return qps, err
 }
 
 func CacheUpdateUserQuota(ctx context.Context, id int) error {

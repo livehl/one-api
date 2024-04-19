@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/config"
+	"github.com/songquanpeng/one-api/common/logger"
+	"github.com/songquanpeng/one-api/model"
 )
 
 var timeFormat = "2006-01-02T15:04:05.000Z"
@@ -102,4 +105,31 @@ func DownloadRateLimit() func(c *gin.Context) {
 
 func UploadRateLimit() func(c *gin.Context) {
 	return rateLimitFactory(config.UploadRateLimitNum, config.UploadRateLimitDuration, "UP")
+}
+
+func TokenAPIRateLimit() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		key := c.Request.Header.Get("Authorization")
+		key = strings.TrimPrefix(key, "Bearer ")
+		key = strings.TrimPrefix(key, "sk-")
+		parts := strings.Split(key, "-")
+		key = parts[0]
+		token, err := model.ValidateUserToken(key)
+		if err != nil {
+			abortWithMessage(c, http.StatusUnauthorized, err.Error())
+			return
+		}
+		logger.SysLog(fmt.Sprintf("api limit  %s %d", key, token.Qps))
+		rateLimitFactory(token.Qps, 60, key)(c)
+		if c.IsAborted() {
+			return
+		}
+		userQps, err := model.CacheGetUserQps(c, token.UserId)
+		if err != nil {
+			abortWithMessage(c, http.StatusUnauthorized, err.Error())
+			return
+		}
+		rateLimitFactory(userQps, 60, fmt.Sprintf("user_limit_%d", token.UserId))(c)
+		return
+	}
 }

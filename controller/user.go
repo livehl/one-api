@@ -371,7 +371,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 	if updatedUser.Password == "" {
-		updatedUser.Password = "$I_LOVE_U" // make Validator happy :)
+		updatedUser.Password = "!qwertyui" // make Validator happy :)
 	}
 	if err := common.Validate.Struct(&updatedUser); err != nil {
 		c.JSON(http.StatusOK, gin.H{

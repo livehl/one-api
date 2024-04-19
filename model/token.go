@@ -25,7 +25,7 @@ type Token struct {
 	Key            string  `json:"key" gorm:"type:char(48);uniqueIndex"`
 	Status         int     `json:"status" gorm:"default:1"`
 	Name           string  `json:"name" gorm:"index" `
-	Qps            int     `json:"qps" gorm:"default:-1" `
+	Qps            int     `json:"qps" gorm:"default:100" `
 	CreatedTime    int64   `json:"created_time" gorm:"bigint"`
 	AccessedTime   int64   `json:"accessed_time" gorm:"bigint"`
 	ExpiredTime    int64   `json:"expired_time" gorm:"bigint;default:-1"` // -1 means never expired
