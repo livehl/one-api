@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common/config"
+	"github.com/songquanpeng/one-api/common/ctxkey"
 	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/common/network"
 	"github.com/songquanpeng/one-api/common/random"
@@ -14,7 +15,7 @@ import (
 )
 
 func GetAllTokens(c *gin.Context) {
-	userId := c.GetInt("id")
+	userId := c.GetInt(ctxkey.Id)
 	p, _ := strconv.Atoi(c.Query("p"))
 	if p < 0 {
 		p = 0
@@ -39,7 +40,7 @@ func GetAllTokens(c *gin.Context) {
 }
 
 func SearchTokens(c *gin.Context) {
-	userId := c.GetInt("id")
+	userId := c.GetInt(ctxkey.Id)
 	keyword := c.Query("keyword")
 	tokens, err := model.SearchUserTokens(userId, keyword)
 	if err != nil {
@@ -59,7 +60,7 @@ func SearchTokens(c *gin.Context) {
 
 func GetToken(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
-	userId := c.GetInt("id")
+	userId := c.GetInt(ctxkey.Id)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -84,8 +85,8 @@ func GetToken(c *gin.Context) {
 }
 
 func GetTokenStatus(c *gin.Context) {
-	tokenId := c.GetInt("token_id")
-	userId := c.GetInt("id")
+	tokenId := c.GetInt(ctxkey.TokenId)
+	userId := c.GetInt(ctxkey.Id)
 	token, err := model.GetTokenByIds(tokenId, userId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -140,7 +141,7 @@ func AddToken(c *gin.Context) {
 	}
 
 	cleanToken := model.Token{
-		UserId:         c.GetInt("id"),
+		UserId:         c.GetInt(ctxkey.Id),
 		Name:           token.Name,
 		Qps:            token.Qps,
 		Key:            random.GenerateKey(),
@@ -172,7 +173,7 @@ func AddToken(c *gin.Context) {
 
 func DeleteToken(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	userId := c.GetInt("id")
+	userId := c.GetInt(ctxkey.Id)
 	err := model.DeleteTokenById(id, userId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -189,7 +190,7 @@ func DeleteToken(c *gin.Context) {
 }
 
 func UpdateToken(c *gin.Context) {
-	userId := c.GetInt("id")
+	userId := c.GetInt(ctxkey.Id)
 	statusOnly := c.Query("status_only")
 	token := model.Token{}
 	err := c.ShouldBindJSON(&token)
