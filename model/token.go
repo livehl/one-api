@@ -34,6 +34,8 @@ type Token struct {
 	UsedQuota      int64   `json:"used_quota" gorm:"bigint;default:0"` // used quota
 	Models         *string `json:"models" gorm:"default:''"`           // allowed models
 	Subnet         *string `json:"subnet" gorm:"default:''"`           // allowed subnet
+	BlackList      *string `json:"black_list" gorm:"default:''"`       // denied subnet
+	Notify         bool    `json:"notify" gorm:"default:false"`
 }
 
 func GetAllUserTokens(userId int, startIdx int, num int, order string) ([]*Token, error) {

@@ -3,12 +3,14 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/message"
 	"github.com/songquanpeng/one-api/model"
-	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,6 +41,59 @@ func GetStatus(c *gin.Context) {
 		},
 	})
 	return
+}
+
+type contactAddRequest struct {
+	phone string `json:"phone"`
+	name  string `json:"name"`
+}
+
+func AddContact(c *gin.Context) {
+	req := contactAddRequest{}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	err = model.AddContact(req.phone, req.name)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+	})
+	return
+}
+
+func GetContacts(c *gin.Context) {
+	p, _ := strconv.Atoi(c.Query("p"))
+	if p < 0 {
+		p = 0
+	}
+
+	order := c.DefaultQuery("order", "")
+	contacts, err := model.GetAllContacts(p*config.ItemsPerPage, config.ItemsPerPage, order)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    contacts,
+	})
 }
 
 func GetNotice(c *gin.Context) {

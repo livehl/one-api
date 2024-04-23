@@ -2,6 +2,10 @@ package model
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/env"
@@ -12,9 +16,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"os"
-	"strings"
-	"time"
 )
 
 var DB *gorm.DB
@@ -135,6 +136,10 @@ func InitDB(envName string) (db *gorm.DB, err error) {
 			return nil, err
 		}
 		err = db.AutoMigrate(&Log{})
+		if err != nil {
+			return nil, err
+		}
+		err = db.AutoMigrate(&Contact{})
 		if err != nil {
 			return nil, err
 		}

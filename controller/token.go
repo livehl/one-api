@@ -151,6 +151,8 @@ func AddToken(c *gin.Context) {
 		UnlimitedQuota: token.UnlimitedQuota,
 		Models:         token.Models,
 		Subnet:         token.Subnet,
+		BlackList:      token.BlackList,
+		Notify:         token.Notify,
 	}
 	err = cleanToken.Insert()
 	if err != nil {
@@ -241,6 +243,8 @@ func UpdateToken(c *gin.Context) {
 		cleanToken.UnlimitedQuota = token.UnlimitedQuota
 		cleanToken.Models = token.Models
 		cleanToken.Subnet = token.Subnet
+		cleanToken.BlackList = token.BlackList
+		cleanToken.Notify = token.Notify
 	}
 	err = cleanToken.Update()
 	if err != nil {
