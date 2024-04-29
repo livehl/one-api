@@ -14,6 +14,7 @@ import (
 type Log struct {
 	Id               int    `json:"id"`
 	UserId           int    `json:"user_id" gorm:"index"`
+	TokenId          int    `json:"token_id" gorm:"index"`
 	CreatedAt        int64  `json:"created_at" gorm:"bigint;index:idx_created_at_type"`
 	Type             int    `json:"type" gorm:"index:idx_created_at_type"`
 	Content          string `json:"content"`
@@ -68,13 +69,14 @@ func RecordTopupLog(userId int, content string, quota int) {
 	}
 }
 
-func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptTokens int, completionTokens int, requestContent string, responseText string, modelName string, tokenName string, quota int64, content string) {
+func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptTokens int, completionTokens int, requestContent string, responseText string, modelName string, tokenId int, tokenName string, quota int64, content string) {
 	logger.Info(ctx, fmt.Sprintf("record consume log: userId=%d, channelId=%d, promptTokens=%d, completionTokens=%d, modelName=%s, tokenName=%s, quota=%d, content=%s", userId, channelId, promptTokens, completionTokens, modelName, tokenName, quota, content))
 	if !config.LogConsumeEnabled {
 		return
 	}
 	log := &Log{
 		UserId:           userId,
+		TokenId:          tokenId,
 		Username:         GetUsernameById(userId),
 		CreatedAt:        helper.GetTimestamp(),
 		Type:             LogTypeConsume,
@@ -211,6 +213,7 @@ type LogStatistic struct {
 	ModelName        string `gorm:"column:model_name"`
 	RequestCount     int    `gorm:"column:request_count"`
 	Quota            int    `gorm:"column:quota"`
+	Qps              int    `gorm:"column:qps"`
 	PromptTokens     int    `gorm:"column:prompt_tokens"`
 	CompletionTokens int    `gorm:"column:completion_tokens"`
 }
@@ -230,6 +233,7 @@ func SearchLogsByDayAndModel(userId, start, end int) (LogStatistics []*LogStatis
 		SELECT `+groupSelect+`,
 		model_name, count(1) as request_count,
 		sum(quota) as quota,
+		sum(1) as qps,
 		sum(prompt_tokens) as prompt_tokens,
 		sum(completion_tokens) as completion_tokens
 		FROM logs

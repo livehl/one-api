@@ -42,6 +42,8 @@ type User struct {
 	VerificationCode string `json:"verification_code" gorm:"-:all"`                                    // this field is only for Email verification, don't save it to database!
 	AccessToken      string `json:"access_token" gorm:"type:char(32);column:access_token;uniqueIndex"` // this token is for system management
 	Quota            int64  `json:"quota" gorm:"bigint;default:0"`
+	Combo            string `json:"combo" gorm:"type:varchar(32);"`
+	ExpiredAt        int64  `json:"expired_at" gorm:"bigint;default:0"`
 	Qps              int    `json:"qps" gorm:"int;default:10000"`
 	Phone            string `json:"phone" gorm:"index" validate:"min=8,max=15"`
 	UsedQuota        int64  `json:"used_quota" gorm:"bigint;default:0;column:used_quota"` // used quota

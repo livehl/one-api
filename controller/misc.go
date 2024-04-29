@@ -44,8 +44,9 @@ func GetStatus(c *gin.Context) {
 }
 
 type contactAddRequest struct {
-	phone string `json:"phone"`
-	name  string `json:"name"`
+	Phone string `json:"phone"`
+	Name  string `json:"name"`
+	Info  string `json:"info"`
 }
 
 func AddContact(c *gin.Context) {
@@ -58,7 +59,7 @@ func AddContact(c *gin.Context) {
 		})
 		return
 	}
-	err = model.AddContact(req.phone, req.name)
+	err = model.AddContact(req.Phone, req.Name, req.Info)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -94,6 +95,24 @@ func GetContacts(c *gin.Context) {
 		"message": "",
 		"data":    contacts,
 	})
+}
+
+func GetCombos(c *gin.Context) {
+	combos, err := model.GetAllCombos()
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    combos,
+	})
+
 }
 
 func GetNotice(c *gin.Context) {

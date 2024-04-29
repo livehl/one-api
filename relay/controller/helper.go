@@ -198,7 +198,7 @@ func postConsumeQuota(ctx context.Context, usage *relaymodel.Usage, meta *meta.M
 	} else {
 		requestContent = textRequest.Prompt.(string)
 	}
-	model.RecordConsumeLog(ctx, meta.UserId, meta.ChannelId, promptTokens, completionTokens, requestContent, usage.ResponseText, textRequest.Model, meta.TokenName, quota, logContent)
+	model.RecordConsumeLog(ctx, meta.UserId, meta.ChannelId, promptTokens, completionTokens, requestContent, usage.ResponseText, textRequest.Model, meta.TokenId, meta.TokenName, quota, logContent)
 	model.UpdateUserUsedQuotaAndRequestCount(meta.UserId, quota)
 	model.UpdateChannelUsedQuota(meta.ChannelId, quota)
 }

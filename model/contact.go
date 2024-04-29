@@ -9,12 +9,14 @@ type Contact struct {
 	Phone   string `json:"phone" gorm:"index"`
 	Created int64  `json:"created" gorm:"bigint"`
 	Name    string `json:"name"`
+	Info    string `json:"info"`
 }
 
-func AddContact(phone string, name string) (err error) {
+func AddContact(phone string, name string, info string) (err error) {
 	contact := &Contact{
 		Phone:   phone,
 		Name:    name,
+		Info:    info,
 		Created: helper.GetTimestamp(),
 	}
 	err = DB.Create(contact).Error
