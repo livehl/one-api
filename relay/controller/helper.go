@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common"
@@ -126,9 +127,9 @@ func getPromptTokens(textRequest *relaymodel.GeneralOpenAIRequest, relayMode int
 }
 
 func getPreConsumedQuota(textRequest *relaymodel.GeneralOpenAIRequest, promptTokens int, ratio float64) int64 {
-	preConsumedTokens := config.PreConsumedQuota
+	preConsumedTokens := config.PreConsumedQuota + int64(promptTokens)
 	if textRequest.MaxTokens != 0 {
-		preConsumedTokens = int64(promptTokens) + int64(textRequest.MaxTokens)
+		preConsumedTokens += int64(textRequest.MaxTokens)
 	}
 	return int64(float64(preConsumedTokens) * ratio)
 }
@@ -212,4 +213,24 @@ func getMappedModelName(modelName string, mapping map[string]string) (string, bo
 		return mappedModelName, true
 	}
 	return modelName, false
+}
+
+func isErrorHappened(meta *meta.Meta, resp *http.Response) bool {
+	if resp == nil {
+		if meta.ChannelType == channeltype.AwsClaude {
+			return false
+		}
+		return true
+	}
+	if resp.StatusCode != http.StatusOK {
+		return true
+	}
+	if meta.ChannelType == channeltype.DeepL {
+		// skip stream check for deepl
+		return false
+	}
+	if meta.IsStream && strings.HasPrefix(resp.Header.Get("Content-Type"), "application/json") {
+		return true
+	}
+	return false
 }
