@@ -2,8 +2,9 @@ package ratio
 
 import (
 	"encoding/json"
-	"github.com/songquanpeng/one-api/common/logger"
 	"strings"
+
+	"github.com/songquanpeng/one-api/common/logger"
 )
 
 const (
@@ -137,6 +138,8 @@ var ModelRatio = map[string]float64{
 	"Baichuan2-Turbo-192k": 0.016 * RMB,
 	"Baichuan2-53B":        0.02 * RMB,
 	// https://api.minimax.chat/document/price
+	"abab6.5-chat":  0.03 * RMB,
+	"abab6.5s-chat": 0.01 * RMB,
 	"abab6-chat":    0.1 * RMB,
 	"abab5.5-chat":  0.015 * RMB,
 	"abab5.5s-chat": 0.005 * RMB,
@@ -162,6 +165,20 @@ var ModelRatio = map[string]float64{
 	"step-1v-32k": 0.024 * RMB,
 	"step-1-32k":  0.024 * RMB,
 	"step-1-200k": 0.15 * RMB,
+	// https://cohere.com/pricing
+	"command":               0.5,
+	"command-nightly":       0.5,
+	"command-light":         0.5,
+	"command-light-nightly": 0.5,
+	"command-r":             0.5 / 1000 * USD,
+	"command-r-plus":        3.0 / 1000 * USD,
+	// https://platform.deepseek.com/api-docs/pricing/
+	"deepseek-chat":  1.0 / 1000 * RMB,
+	"deepseek-coder": 1.0 / 1000 * RMB,
+	// https://www.deepl.com/pro?cta=header-prices
+	"deepl-zh": 25.0 / 1000 * USD,
+	"deepl-en": 25.0 / 1000 * USD,
+	"deepl-ja": 25.0 / 1000 * USD,
 }
 
 var CompletionRatio = map[string]float64{}
@@ -215,6 +232,9 @@ func UpdateModelRatioByJSONString(jsonStr string) error {
 
 func GetModelRatio(name string) float64 {
 	if strings.HasPrefix(name, "qwen-") && strings.HasSuffix(name, "-internet") {
+		name = strings.TrimSuffix(name, "-internet")
+	}
+	if strings.HasPrefix(name, "command-") && strings.HasSuffix(name, "-internet") {
 		name = strings.TrimSuffix(name, "-internet")
 	}
 	ratio, ok := ModelRatio[name]
@@ -277,6 +297,9 @@ func GetCompletionRatio(name string) float64 {
 	if strings.HasPrefix(name, "gemini-") {
 		return 3
 	}
+	if strings.HasPrefix(name, "deepseek-") {
+		return 2
+	}
 	switch name {
 	case "llama2-70b-4096":
 		return 0.8 / 0.64
@@ -284,6 +307,12 @@ func GetCompletionRatio(name string) float64 {
 		return 2
 	case "llama3-70b-8192":
 		return 0.79 / 0.59
+	case "command", "command-light", "command-nightly", "command-light-nightly":
+		return 2
+	case "command-r":
+		return 3
+	case "command-r-plus":
+		return 5
 	}
 	return 1
 }

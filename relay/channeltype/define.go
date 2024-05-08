@@ -36,6 +36,11 @@ const (
 	StepFun
 	AwsClaude
 	Coze
+	Cohere
+	DeepSeek
+	Cloudflare
+	DeepL
+	TogetherAI
 
 	Dummy
 )
