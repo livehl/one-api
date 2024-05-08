@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -359,6 +361,123 @@ func GetSelf(c *gin.Context) {
 		"data":    user,
 	})
 	return
+}
+
+func ReNew(c *gin.Context) {
+	id := c.GetInt(ctxkey.Id)
+	user, err := model.GetUserById(id, false)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	combo_id, err := strconv.Atoi(user.Combo)
+	if user.Combo == "" || err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "该用户没有套餐",
+		})
+		return
+	}
+
+	combo, err := model.GetComboById(combo_id)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "该用户没有套餐",
+		})
+		return
+	}
+	pay_url := DoPay(combo.Price, user.Id)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    pay_url,
+	})
+	return
+}
+
+func DoPay(money int, uid int) string {
+	values := map[string]any{"amount": money, "description": "套餐购买", "app": "oneapi", "callback": config.ServerAddress + "/api/pay/ok/" + strconv.Itoa(uid)}
+
+	jsonValue, _ := json.Marshal(values)
+	request, error := http.NewRequest("POST", config.PayHost+"/pay/native", bytes.NewBuffer(jsonValue))
+	if error != nil {
+		panic(error)
+	}
+	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	response, error := client.Do(request)
+	if error != nil {
+		panic(error)
+	}
+	defer response.Body.Close()
+	body, _ := io.ReadAll(response.Body)
+	return string(body)
+}
+
+type PayCallBack struct {
+	Id     int `json:"id"`
+	Status int `json:"status"`
+}
+
+func ReNewCallBack(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var pay PayCallBack
+	err = json.NewDecoder(c.Request.Body).Decode(&pay)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "无效的参数",
+		})
+		return
+	}
+	if pay.Status != 1 {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "支付失败",
+		})
+		return
+	}
+	user, err := model.GetUserById(id, false)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var expired_at int64
+	if user.ExpiredAt < time.Now().Unix() {
+		expired_at = time.Now().AddDate(0, 1, 0).Unix()
+	} else {
+		expired_at = time.Unix(user.ExpiredAt, 0).AddDate(0, 1, 0).Unix()
+	}
+	user.ExpiredAt = expired_at
+	err = user.Update(false)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+	})
+	return
+
 }
 
 func UpdateUser(c *gin.Context) {

@@ -1,12 +1,13 @@
 package config
 
 import (
-	"github.com/songquanpeng/one-api/common/env"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/songquanpeng/one-api/common/env"
 
 	"github.com/google/uuid"
 )
@@ -144,3 +145,5 @@ var MetricFailChanSize = env.Int("METRIC_FAIL_CHAN_SIZE", 128)
 var InitialRootToken = os.Getenv("INITIAL_ROOT_TOKEN")
 
 var GeminiVersion = env.String("GEMINI_VERSION", "v1")
+
+var PayHost = env.String("PAY_HOST", "https://pay.aios123.com")

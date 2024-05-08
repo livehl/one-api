@@ -20,6 +20,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/models", middleware.UserAuth(), controller.DashboardListModels)
 		apiRouter.GET("/notice", controller.GetNotice)
 		apiRouter.GET("/about", controller.GetAbout)
+		apiRouter.POST("/api/pay/ok/:id", controller.ReNewCallBack)
 		apiRouter.GET("/home_page_content", controller.GetHomePageContent)
 		apiRouter.GET("/verification", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendEmailVerification)
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)
@@ -44,6 +45,7 @@ func SetApiRouter(router *gin.Engine) {
 			{
 				selfRoute.GET("/dashboard", controller.GetUserDashboard)
 				selfRoute.GET("/self", controller.GetSelf)
+				selfRoute.POST("/renew", controller.ReNew)
 				selfRoute.PUT("/self", controller.UpdateSelf)
 				selfRoute.DELETE("/self", controller.DeleteSelf)
 				selfRoute.GET("/token", controller.GenerateAccessToken)
