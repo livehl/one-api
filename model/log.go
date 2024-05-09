@@ -18,6 +18,7 @@ type Log struct {
 	CreatedAt        int64  `json:"created_at" gorm:"bigint;index:idx_created_at_type"`
 	Type             int    `json:"type" gorm:"index:idx_created_at_type"`
 	Content          string `json:"content"`
+	Ip               string `json:"ip"`
 	Username         string `json:"username" gorm:"index:index_username_model_name,priority:2;default:''"`
 	TokenName        string `json:"token_name" gorm:"index;default:''"`
 	ModelName        string `json:"model_name" gorm:"index;index:index_username_model_name,priority:1;default:''"`
@@ -69,7 +70,7 @@ func RecordTopupLog(userId int, content string, quota int) {
 	}
 }
 
-func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptTokens int, completionTokens int, requestContent string, responseText string, modelName string, tokenId int, tokenName string, quota int64, content string) {
+func RecordConsumeLog(ctx context.Context, ip string, userId int, channelId int, promptTokens int, completionTokens int, requestContent string, responseText string, modelName string, tokenId int, tokenName string, quota int64, content string) {
 	logger.Info(ctx, fmt.Sprintf("record consume log: userId=%d, channelId=%d, promptTokens=%d, completionTokens=%d, modelName=%s, tokenName=%s, quota=%d, content=%s", userId, channelId, promptTokens, completionTokens, modelName, tokenName, quota, content))
 	if !config.LogConsumeEnabled {
 		return
@@ -81,6 +82,7 @@ func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptToke
 		CreatedAt:        helper.GetTimestamp(),
 		Type:             LogTypeConsume,
 		Content:          content,
+		Ip:               ip,
 		PromptTokens:     promptTokens,
 		CompletionTokens: completionTokens,
 		TokenName:        tokenName,
@@ -243,6 +245,81 @@ func SearchLogsByDayAndModel(userId, start, end int) (LogStatistics []*LogStatis
 		GROUP BY day, model_name
 		ORDER BY day, model_name
 	`, userId, start, end).Scan(&LogStatistics).Error
+
+	return LogStatistics, err
+}
+
+type LogStatisticNew struct {
+	Day              string `gorm:"column:day"`
+	Quota            int    `gorm:"column:quota"`
+	Qps              int    `gorm:"column:qps"`
+	PromptTokens     int    `gorm:"column:prompt_tokens"`
+	CompletionTokens int    `gorm:"column:completion_tokens"`
+}
+
+func SearchLogsByDayAndApi(userId, api, start, end int) (LogStatistics []*LogStatisticNew, err error) {
+	groupSelect := "DATE_FORMAT(FROM_UNIXTIME(created_at), '%Y-%m-%d') as day"
+
+	if api > 0 {
+		err = LOG_DB.Raw(`
+		SELECT `+groupSelect+`,
+		sum(quota) as quota,
+		sum(1) as qps,
+		sum(prompt_tokens) as prompt_tokens,
+		sum(completion_tokens) as completion_tokens
+		FROM logs
+		WHERE type=2
+		AND token_id= ?
+		AND created_at BETWEEN ? AND ?
+		GROUP BY day
+		ORDER BY day
+	`, api, start, end).Scan(&LogStatistics).Error
+	} else {
+		err = LOG_DB.Raw(`
+		SELECT `+groupSelect+`,
+		sum(quota) as quota,
+		sum(1) as qps,
+		sum(prompt_tokens) as prompt_tokens,
+		sum(completion_tokens) as completion_tokens
+		FROM logs
+		WHERE type=2
+		AND user_id= ?
+		AND created_at BETWEEN ? AND ?
+		GROUP BY day
+		ORDER BY day
+	`, userId, start, end).Scan(&LogStatistics).Error
+	}
+
+	return LogStatistics, err
+}
+
+type LogIp struct {
+	Ip string `gorm:"column:ip"`
+}
+
+func SearchIpsByDayAndApi(userId, api, start, end int) (LogStatistics []*LogIp, err error) {
+
+	if api > 0 {
+		err = LOG_DB.Raw(`
+		SELECT
+		ip
+		FROM logs
+		WHERE type=2
+		AND token_id= ?
+		AND created_at BETWEEN ? AND ?
+		ORDER BY created_at desc
+	`, api, start, end).Scan(&LogStatistics).Error
+	} else {
+		err = LOG_DB.Raw(`
+		SELECT
+		ip
+		FROM logs
+		WHERE type=2
+		AND user_id= ?
+		AND created_at BETWEEN ? AND ?
+		ORDER BY created_at desc
+	`, userId, start, end).Scan(&LogStatistics).Error
+	}
 
 	return LogStatistics, err
 }

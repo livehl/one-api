@@ -44,6 +44,8 @@ func SetApiRouter(router *gin.Engine) {
 			selfRoute.Use(middleware.UserAuth())
 			{
 				selfRoute.GET("/dashboard", controller.GetUserDashboard)
+				selfRoute.GET("/dashboard_log", controller.GetUserDashboardLog)
+				selfRoute.GET("/dashboard_ip", controller.GetUserDashboardIp)
 				selfRoute.GET("/self", controller.GetSelf)
 				selfRoute.POST("/renew", controller.ReNew)
 				selfRoute.PUT("/self", controller.UpdateSelf)
